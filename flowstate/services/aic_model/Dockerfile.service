@@ -1,0 +1,22 @@
+FROM aic_model:latest AS base
+
+# Copy zenoh config and set environment variable
+COPY zenoh_config.json5 /opt/zenoh_config.json5
+
+ENV RMW_IMPLEMENTATION=rmw_zenoh_cpp
+
+ENV ZENOH_SESSION_CONFIG_URI=/opt/zenoh_config.json5
+# ENV ZENOH_CONFIG_OVERRIDE='mode="peer";connect/endpoints=["tcp/zenoh-router.app-intrinsic-base.svc.cluster.local:7447"]'
+
+# Enable GPU support
+ENV LD_LIBRARY_PATH="/usr/local/nvidia/lib64:/usr/local/nvidia/bin:${LD_LIBRARY_PATH:-}"
+
+# Generate entrypoint script and set permissions
+COPY --chmod=755 <<"EOF" /flowstate_entrypoint.sh
+#!/bin/bash
+set -e
+exec pixi run --as-is ros2 run aic_model aic_model "$@"
+EOF
+
+ENTRYPOINT ["/flowstate_entrypoint.sh"]
+CMD ["--ros-args", "-p", "policy:=aic_example_policies.ros.CheatCode"]
