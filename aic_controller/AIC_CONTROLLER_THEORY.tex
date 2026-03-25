@@ -1,0 +1,1029 @@
+\documentclass[11pt,a4paper]{article}
+
+% ── Packages ──
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,mathtools}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,backgrounds}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{parskip}
+
+% ── Colors ──
+\definecolor{boxblue}{RGB}{230,240,255}
+\definecolor{boxborder}{RGB}{70,130,200}
+\definecolor{examplegreen}{RGB}{235,250,235}
+\definecolor{exampleborder}{RGB}{60,160,60}
+\definecolor{reasoningamber}{RGB}{255,248,230}
+\definecolor{reasoningborder}{RGB}{200,160,40}
+
+% ── Custom boxes ──
+\newtcolorbox{keqbox}[1][]{
+  colback=boxblue, colframe=boxborder, arc=3pt,
+  boxrule=0.8pt, left=6pt, right=6pt, top=4pt, bottom=4pt,
+  title={#1}, fonttitle=\bfseries\sffamily
+}
+
+\newtcolorbox{examplebox}[1][Example]{
+  colback=examplegreen, colframe=exampleborder, arc=3pt,
+  boxrule=0.6pt, left=6pt, right=6pt, top=4pt, bottom=4pt,
+  title={#1}, fonttitle=\bfseries\sffamily\small
+}
+
+\newtcolorbox{reasonbox}[1][Reasoning]{
+  colback=reasoningamber, colframe=reasoningborder, arc=3pt,
+  boxrule=0.6pt, left=6pt, right=6pt, top=4pt, bottom=4pt,
+  title={#1}, fonttitle=\bfseries\sffamily\small
+}
+
+% ── Shortcuts ──
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\SE}{\mathrm{SE}}
+\newcommand{\SO}{\mathrm{SO}}
+\newcommand{\so}{\mathfrak{so}}
+\newcommand{\se}{\mathfrak{se}}
+\newcommand{\Exp}{\operatorname{Exp}}
+\newcommand{\Log}{\operatorname{Log}}
+\newcommand{\tr}{\mathsf{T}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\clamp}{\operatorname{clamp}}
+\newcommand{\SLERP}{\operatorname{SLERP}}
+\newcommand{\odot}{\circ}  % element-wise product
+
+% ── Headers ──
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily AIC Controller --- Mathematical Reference}
+\fancyhead[R]{\small\sffamily\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Section formatting ──
+\titleformat{\section}{\Large\bfseries\sffamily}{{\thesection}}{0.8em}{}
+\titleformat{\subsection}{\large\bfseries\sffamily}{{\thesubsection}}{0.6em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\sffamily}{{\thesubsubsection}}{0.5em}{}
+
+\hypersetup{
+  colorlinks=true, linkcolor=boxborder, urlcolor=boxborder, citecolor=boxborder
+}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries\sffamily AIC Controller}\\[4pt]
+  {\Large\sffamily Mathematical Foundations \& Algorithm Reference}\\[12pt]
+  {\normalsize Auto-generated from source --- \texttt{aic\_controller} package}\\[2pt]
+  {\small\today}
+\end{center}
+
+\vspace{6pt}
+\hrule height 0.8pt
+\vspace{10pt}
+
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Architecture Overview}
+\label{sec:arch}
+
+The AIC Controller is a ROS\,2 \texttt{controller\_interface::ControllerInterface}
+plugin.  It runs inside \texttt{ros2\_control} at a fixed frequency and supports
+two \emph{control modes}:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Mode} & \textbf{Output Interface} & \textbf{Status} \\
+\midrule
+Impedance  & Joint effort (torque) & Implemented \\
+Admittance & Joint position        & Not yet implemented \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Within impedance mode, two \emph{target modes} select the coordinate space of
+incoming commands:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Target Mode} & \textbf{Message Type} & \textbf{Impedance Action} \\
+\midrule
+Cartesian & \texttt{MotionUpdate}      & \texttt{CartesianImpedanceAction} \\
+Joint     & \texttt{JointMotionUpdate} & \texttt{JointImpedanceAction} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Each control cycle executes:
+
+\begin{center}
+\fbox{\textsf{Read Hardware}}\;$\to$\;
+\fbox{\textsf{Ingest Commands}}\;$\to$\;
+\fbox{\textsf{Generate Reference}}\;$\to$\;
+\fbox{\textsf{Compute Torques}}\;$\to$\;
+\fbox{\textsf{Write Hardware}}
+\end{center}
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Mathematical Preliminaries}
+\label{sec:prelim}
+
+% --------------------------------------------------------------------------
+\subsection{Rigid Body Poses --- $\SE(3)$ and $\SO(3)$}
+\label{sec:SE3}
+
+A rigid body pose in 3D is an element of the \emph{Special Euclidean group}:
+\[
+  T = \begin{bmatrix} R & p \\ \bm{0}^\tr & 1 \end{bmatrix} \in \SE(3),
+  \qquad R \in \SO(3),\; p \in \R^3
+\]
+where $R$ is a rotation matrix and $p$ is a translation vector.
+
+In code, poses are stored as \texttt{Eigen::Isometry3d} ---
+\texttt{pose.linear()} gives $R$ and \texttt{pose.translation()} gives $p$.
+
+% --------------------------------------------------------------------------
+\subsection{Exponential and Logarithmic Maps}
+\label{sec:explog}
+
+The Lie algebra $\so(3)$ consists of $3\!\times\!3$ skew-symmetric matrices.
+The \emph{hat} operator maps $\R^3 \to \so(3)$:
+\[
+  \bm{\omega}
+  = \begin{bmatrix} \omega_1 \\ \omega_2 \\ \omega_3 \end{bmatrix}
+  \;\mapsto\;
+  [\bm{\omega}]_\times
+  = \begin{bmatrix}
+      0         & -\omega_3 & \omega_2 \\
+      \omega_3  & 0         & -\omega_1 \\
+      -\omega_2 & \omega_1  & 0
+    \end{bmatrix}
+\]
+
+\paragraph{Exponential map} (tangent vector $\to$ rotation):
+\[
+  \Exp : \R^3 \to \SO(3),
+  \qquad
+  R = \exp\!\bigl([\bm{\omega}]_\times\bigr)
+\]
+
+Computed via the Rodrigues formula.  For quaternions (Sophus \texttt{SO3::exp}):
+\[
+  q = \Exp(\bm{\delta}),
+  \qquad
+  \theta = \|\bm{\delta}\|,
+  \quad
+  q = \Bigl(\cos\tfrac{\theta}{2},\;
+             \tfrac{\bm{\delta}}{\theta}\sin\tfrac{\theta}{2}\Bigr)
+\]
+
+\paragraph{Logarithmic map} (rotation $\to$ tangent vector):
+\[
+  \Log : \SO(3) \to \R^3,
+  \qquad
+  \bm{\omega} = \Log(R)
+\]
+This is the inverse of $\Exp$.  Given a unit quaternion $q$, it extracts the
+axis-angle vector $\bm{\omega}$ with $\|\bm{\omega}\| = \theta$ (rotation angle)
+and $\bm{\omega}/\theta$ the rotation axis.
+
+\paragraph{SE(3) integration.}
+The twist is $\bm{\xi} = [v^\tr,\, \omega^\tr]^\tr \in \R^6$.
+Pose integration uses:
+\begin{keqbox}[SE(3) Integration]
+\[
+  T_{k+1} = T_k \cdot \Exp(\bm{\xi}\,\Delta t)
+\]
+\end{keqbox}
+
+Implemented in \texttt{utils::integrate\_pose} via Sophus \texttt{SE3::exp}.
+
+\begin{reasonbox}[Why Lie groups instead of Euler angles?]
+Classical Euler angles suffer from gimbal lock and representation singularities.
+Working directly on $\SE(3)$/$\SO(3)$ ensures singularity-free pose integration
+and consistent orientation error computation.
+\end{reasonbox}
+
+% --------------------------------------------------------------------------
+\subsection{Robot Jacobian}
+\label{sec:jacobian}
+
+For an $n$-DOF robot, the geometric Jacobian $J(q) \in \R^{6\times n}$
+maps joint velocities to the end-effector twist:
+\[
+  \bm{\xi} = J(q)\,\dot{q}
+\]
+where $\bm{\xi} = [v^\tr,\,\omega^\tr]^\tr$ is the 6D spatial velocity
+(linear + angular) of the tool frame.
+
+The Jacobian is computed externally by a \texttt{kinematics\_interface} plugin
+(typically KDL- or Pinocchio-based) via \texttt{calculate\_jacobian()}.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Cartesian Impedance Control}
+\label{sec:cartesian_imp}
+
+% --------------------------------------------------------------------------
+\subsection{The Spring--Damper Analogy}
+
+Impedance control makes the robot behave like a mechanical spring--damper system
+in Cartesian space.  A~1D mass--spring--damper satisfies:
+\[
+  m\ddot{x} + d\dot{x} + kx = f_{\text{ext}}
+\]
+
+In impedance control we \emph{generate} the wrench:
+\[
+  F = K \cdot e_x + D \cdot e_v
+\]
+where $e_x$ is position error and $e_v$ is velocity error, allowing compliant
+interaction with the environment.
+
+% --------------------------------------------------------------------------
+\subsection{Control Wrench Law}
+\label{sec:wrench_law}
+
+The full 6D control wrench in the base frame is:
+
+\begin{keqbox}[Cartesian Impedance Wrench]
+\begin{equation}
+  F_{\text{ctrl}}
+  = K\,e_x + D\,e_v + F_{\text{ff}} + K_I \odot \!\int\! e_x\,dt + F_{\text{offset}}
+  \label{eq:wrench}
+\end{equation}
+\end{keqbox}
+
+\begin{center}
+\begin{tabular}{ccc}
+\toprule
+\textbf{Symbol} & \textbf{Size} & \textbf{Description} \\
+\midrule
+$K$ & $6\!\times\!6$ & Cartesian stiffness (diagonal) \\
+$D$ & $6\!\times\!6$ & Cartesian damping (diagonal) \\
+$e_x$ & $6\!\times\!1$ & Pose error $= x_{\text{des}} - x_{\text{cur}}$ \\
+$e_v$ & $6\!\times\!1$ & Velocity error $= \dot{x}_{\text{des}} - \dot{x}_{\text{cur}}$ \\
+$F_{\text{ff}}$ & $6\!\times\!1$ & Feedforward wrench (see \S\ref{sec:smoothing}) \\
+$K_I$ & $6\!\times\!1$ & Integrator gain (element-wise) \\
+$F_{\text{offset}}$ & $6\!\times\!1$ & Constant offset (e.g.\ payload) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The pose error $e_x$ is computed by the kinematics plugin's
+\texttt{calculate\_frame\_difference()}, yielding
+$[e_{\text{trans}}^\tr,\, e_{\text{rot}}^\tr]^\tr$ where the rotational part is
+in axis-angle form.
+
+\begin{examplebox}
+Suppose TCP position $p = [0.5,\,0,\,0.3]$\,m and desired
+$p_d = [0.5,\,0.05,\,0.3]$\,m with
+$K = \diag(500,500,500,20,20,20)$\,N/m\,(N\,m/rad):
+\[
+  e_x = [0,\; 0.05,\; 0,\; 0,\; 0,\; 0]^\tr
+  \;\;\Longrightarrow\;\;
+  F = K\,e_x = [0,\; 25,\; 0,\; 0,\; 0,\; 0]^\tr\;\text{N}
+\]
+A 25\,N restoring force along $y$.
+\end{examplebox}
+
+% --------------------------------------------------------------------------
+\subsection{PID-Like Extension --- Integral Term}
+\label{sec:integral}
+
+An integral term accumulates pose error to eliminate steady-state offset:
+\begin{align}
+  e_I(k\!+\!1) &= \clamp\!\bigl(e_I(k) + e_x(k),\; -B,\; B\bigr)
+  \label{eq:integrator_update} \\[4pt]
+  F_I &= K_I \odot e_I
+  \label{eq:integrator_force}
+\end{align}
+
+where $B \in \R^6$ is the integrator bound (anti-windup) and $\odot$ denotes
+element-wise multiplication.
+
+\begin{reasonbox}[Why anti-windup?]
+Without the bound $B$, large transient errors (e.g.\ during collisions) cause
+the integrator to \emph{wind up}, producing dangerous persistent forces even
+after the error is resolved.
+\end{reasonbox}
+
+% --------------------------------------------------------------------------
+\subsection{Mapping Wrench to Joint Torques}
+\label{sec:JT}
+
+The Cartesian wrench is mapped to joint torques via the Jacobian transpose:
+
+\begin{keqbox}[Jacobian Transpose Mapping]
+\begin{equation}
+  \tau = J^\tr\, F_{\text{ctrl}}
+  \label{eq:JT}
+\end{equation}
+\end{keqbox}
+
+\paragraph{Derivation from virtual work.}
+A virtual joint displacement $\delta q$ produces a Cartesian displacement
+$\delta x = J\,\delta q$.  The work done by force $F$ is:
+\[
+  \delta W
+  = F^\tr \delta x
+  = F^\tr J\,\delta q
+  = (J^\tr F)^\tr \delta q
+\]
+So the equivalent joint torque is $\tau = J^\tr F$.  This does \emph{not}
+require inverting the Jacobian and works even at singularities (though
+Cartesian stiffness degenerates in singular directions).
+
+% --------------------------------------------------------------------------
+\subsection{Wrench and Torque Saturation}
+
+Before applying $J^\tr$, each wrench component is clamped:
+\[
+  F_{\text{ctrl},i}
+  = \clamp(F_{\text{ctrl},i},\; -F_{\max,i},\; F_{\max,i})
+\]
+
+After computing all joint torque contributions, each joint torque is clamped to
+the URDF effort limit:
+\[
+  \tau_i = \clamp(\tau_i,\; -\tau_{\max,i},\; \tau_{\max,i})
+\]
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Nullspace Control}
+\label{sec:nullspace}
+
+% --------------------------------------------------------------------------
+\subsection{Redundancy and the Nullspace}
+
+A robot with $n > 6$ joints has \emph{kinematic redundancy}.  The extra DOFs
+span the nullspace of $J$:
+\[
+  \mathcal{N}(J)
+  = \bigl\{\, \dot{q} \in \R^n \mid J\,\dot{q} = \bm{0} \,\bigr\}
+\]
+
+Nullspace control adds torques that move joints \emph{without} affecting the TCP,
+useful for preferred-posture regulation, joint-limit avoidance, or manipulability
+optimisation.
+
+% --------------------------------------------------------------------------
+\subsection{Nullspace Projector}
+
+The nullspace projection matrix is:
+\begin{equation}
+  N = I_n - J\,J^\dagger
+  \label{eq:nullspace_proj}
+\end{equation}
+where $J^\dagger$ is the right pseudo-inverse of $J$.  Any torque
+$\tau_0 \in \R^n$ projected through $N$ produces zero TCP acceleration:
+\[
+  \tau_{\text{ns}} = N\,\tau_0
+\]
+
+\paragraph{Proof sketch.}
+$J\,J^\dagger\,J = J$, so $J\,N = J(I - JJ^\dagger) = J - J = \bm{0}$.
+Therefore the Cartesian acceleration produced by $\tau_{\text{ns}}$ is zero in
+the linearised dynamics.
+
+% --------------------------------------------------------------------------
+\subsection{Singularity-Robust Pseudo-Inverse (SVD Regularisation)}
+\label{sec:svd}
+
+The na\"ive pseudo-inverse $J^\dagger = J^\tr(JJ^\tr)^{-1}$ diverges near
+singularities.  This implementation uses a \emph{damped pseudo-inverse}
+following \textbf{Chiaverini (1997)} with per-dimension adaptive damping.
+
+\medskip
+
+Compute the SVD of $M = JJ^\tr$:
+\[
+  M = U\,\Sigma\,V^\tr,
+  \qquad
+  \Sigma = \diag(\sigma_1,\, \sigma_2,\, \ldots,\, \sigma_m),
+  \quad
+  \sigma_1 \ge \sigma_2 \ge \cdots \ge \sigma_m \ge 0
+\]
+
+The regularised inverse diagonal entries are:
+
+\begin{keqbox}[Regularised Singular Values]
+\begin{equation}
+  \Sigma^\dagger_{ii}
+  = \frac{\sigma_i}{\sigma_i^2 + \lambda_i^2}
+  \label{eq:reg_sv}
+\end{equation}
+\end{keqbox}
+
+The per-dimension condition number is:
+\[
+  \text{cn}_i = \frac{\sigma_1}{\sigma_i + 10^{-10}}
+\]
+
+The adaptive damping factor is:
+\begin{equation}
+  \lambda_i^2 =
+  \begin{cases}
+    \displaystyle
+    \left(1 - \Bigl(\frac{c_{\text{th}}}{\text{cn}_i}\Bigr)^{\!2}\right)^{\!2}
+    \cdot \frac{1}{\epsilon}
+    & \text{if } \text{cn}_i > c_{\text{th}} \\[10pt]
+    0 & \text{otherwise}
+  \end{cases}
+  \label{eq:lambda}
+\end{equation}
+
+where $c_{\text{th}} = 1500$ is the condition number threshold and
+$\epsilon = 10^{-6}$.
+
+\paragraph{The bisquare function $f(r) = (1 - r^2)^2$.}
+\begin{itemize}[nosep]
+  \item $f(0) = 1$: full damping when condition number is extremely high
+  \item $f(1) = 0$: zero damping at the threshold boundary
+  \item $f'(0) = 0$ and $f'(1) = 0$: smooth onset/offset --- no discontinuous jumps
+\end{itemize}
+
+The final pseudo-inverse is:
+\begin{equation}
+  J^\dagger = J^\tr \, V \, \Sigma^\dagger \, U^\tr
+  \label{eq:pinv}
+\end{equation}
+
+\begin{examplebox}[Singularity example]
+Consider a 7-DOF arm near a shoulder singularity where
+$\sigma_6 \approx 0.001$ and $\sigma_1 = 5.0$:
+\[
+  \text{cn}_6 = \frac{5.0}{0.001} = 5000 \;\gg\; 1500
+  \qquad\Longrightarrow\qquad
+  \lambda_6^2 = \left(1 - (1500/5000)^2\right)^2 \cdot 10^6
+  \approx 7.6\!\times\!10^5
+\]
+This large $\lambda_6^2$ suppresses the near-zero singular value, preventing
+torque spikes.
+\end{examplebox}
+
+% --------------------------------------------------------------------------
+\subsection{Nullspace Impedance Torque}
+
+The raw nullspace torque is a joint-space PD controller:
+\begin{equation}
+  \tau_0
+  = K_{\text{ns}} \odot (q_{\text{ns}}^* - q) - D_{\text{ns}} \odot \dot{q}
+  \label{eq:ns_raw}
+\end{equation}
+
+where $q_{\text{ns}}^*$ is the desired nullspace configuration and
+$K_{\text{ns}},\,D_{\text{ns}} \in \R^n$ are per-joint stiffness/damping.
+
+Projected through the nullspace:
+\begin{equation}
+  \tau_{\text{ns}} = N\,\tau_0
+  = (I - J\,J^\dagger)\,\tau_0
+  \label{eq:ns_projected}
+\end{equation}
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Joint-Limit Avoidance}
+\label{sec:jlimit}
+
+% --------------------------------------------------------------------------
+\subsection{Activation Zone}
+
+For each joint $k$, an activation zone is defined as a percentage $\alpha\in(0,1]$
+of the joint range:
+\begin{align}
+  q_{\text{range}} &= q_{\max} - q_{\min} \notag\\[4pt]
+  q_{\text{upper\_th}} &= q_{\min} + \frac{\alpha\, q_{\text{range}}}{2}
+  \label{eq:upper_thresh} \\[4pt]
+  q_{\text{lower\_th}} &= q_{\max} - \frac{\alpha\, q_{\text{range}}}{2}
+  \label{eq:lower_thresh}
+\end{align}
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth, thick, font=\small\sffamily]
+  \draw[->] (0,0) -- (10.5,0) node[right]{$q$};
+  \foreach \x/\lab in {0.5/$q_{\min}$, 3/$q_{\text{lower\_th}}$,
+                        7/$q_{\text{upper\_th}}$, 9.5/$q_{\max}$}{
+    \draw (\x,0.15) -- (\x,-0.15) node[below]{\lab};
+  }
+  \draw[red!70!black, very thick] (0.5,0) -- (3,0);
+  \draw[green!50!black, very thick] (3,0) -- (7,0);
+  \draw[red!70!black, very thick] (7,0) -- (9.5,0);
+  \node[red!70!black, above] at (1.75,0.2) {active};
+  \node[green!50!black, above] at (5,0.2) {safe zone};
+  \node[red!70!black, above] at (8.25,0.2) {active};
+\end{tikzpicture}
+\end{center}
+
+% --------------------------------------------------------------------------
+\subsection{Potential Field Torque}
+
+Within the activation zone, a linear repulsive potential pushes the joint away
+from its limit:
+
+\begin{equation}
+  \tau_{\text{avoid},k} =
+  \begin{cases}
+    g_u \cdot (q_{\text{upper\_th}} - q_k) & \text{if } q_k > q_{\text{upper\_th}} \\[6pt]
+    g_l \cdot (q_{\text{lower\_th}} - q_k) & \text{if } q_k < q_{\text{lower\_th}} \\[6pt]
+    0 & \text{otherwise}
+  \end{cases}
+  \label{eq:avoid}
+\end{equation}
+
+The gains are chosen so the torque reaches $\tau_{\max}$ exactly at the limit:
+\begin{equation}
+  g_u = \frac{\tau_{\max}}{|q_{\max} - q_{\text{upper\_th}}|},
+  \qquad
+  g_l = \frac{\tau_{\max}}{|q_{\min} - q_{\text{lower\_th}}|}
+  \label{eq:avoid_gains}
+\end{equation}
+
+If the joint exceeds its limit, the torque is \emph{saturated} at $\tau_{\max}$.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Joint-Space Impedance Control}
+\label{sec:joint_imp}
+
+For joint-target mode, a diagonal impedance law is used:
+
+\begin{keqbox}[Joint Impedance Law]
+\begin{equation}
+  \tau
+  = K \odot (q^* - q) + D \odot (\dot{q}^* - \dot{q}) + \tau_{\text{ff}}
+  \label{eq:joint_imp}
+\end{equation}
+\end{keqbox}
+
+where $K,\,D \in \R^n$ are per-joint stiffness/damping vectors,
+$q^*,\,\dot{q}^*$ are reference position/velocity, $\tau_{\text{ff}}$ is
+feedforward torque, and all operations are element-wise.
+
+Each torque is clamped: $\tau_i = \clamp(\tau_i,\,-\tau_{\max,i},\,\tau_{\max,i})$.
+
+This mode is simpler than Cartesian impedance --- it operates directly in joint
+space, requiring no Jacobian, no nullspace projection, and no FK-based error
+computation.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Gravity Compensation}
+\label{sec:gravity}
+
+The gravity torque vector $\tau_g(q)$ compensates for gravitational forces on
+robot links:
+\begin{equation}
+  \tau_g(q)
+  = \sum_{i=1}^{n} J_{v,i}^\tr(q)\, m_i\, \mathbf{g}
+  \label{eq:gravity}
+\end{equation}
+
+where $J_{v,i}$ is the linear Jacobian of the CoM of link $i$, $m_i$ is its
+mass, and $\mathbf{g} = [0,\, 0,\, -9.80665]^\tr$\,m/s$^2$.
+
+Computed by KDL's \texttt{ChainDynParam::JntToGravity} from the URDF kinematic
+chain.  The result is \emph{added} to the impedance torques:
+\[
+  \tau_{\text{total}} = \tau_{\text{impedance}} + \tau_g(q)
+\]
+
+\begin{reasonbox}
+On real hardware, motor controllers receive raw torque commands, so the
+controller must explicitly cancel gravity.  In simulation the physics engine
+handles this, so gravity compensation can be disabled.
+\end{reasonbox}
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Reference Generation and Interpolation}
+\label{sec:refgen}
+
+The controller receives targets asynchronously at a lower frequency and must
+output smooth references at the control rate.
+
+% --------------------------------------------------------------------------
+\subsection{Position Mode --- SLERP and Linear Interpolation}
+\label{sec:pos_interp}
+
+When $t_{\text{rem}} > 0$ (remaining time to target):
+
+\paragraph{Translation} (per-cycle linear interpolation):
+\begin{equation}
+  p_{\text{ref}}(k\!+\!1)
+  = p_{\text{ref}}(k)
+    + \frac{p_{\text{target}} - p_{\text{ref}}(k)}{f_c \cdot t_{\text{rem}}}
+  \label{eq:lin_interp}
+\end{equation}
+where $f_c$ is the control frequency (Hz).
+
+\paragraph{Rotation} (SLERP --- Spherical Linear Interpolation):
+\begin{equation}
+  q_{\text{ref}}(k\!+\!1)
+  = \SLERP\!\!\left(q_{\text{ref}}(k),\; q_{\text{target}},\;
+                     \frac{1}{f_c \cdot t_{\text{rem}}}\right)
+  \label{eq:slerp}
+\end{equation}
+
+SLERP interpolates along the great arc on the unit quaternion sphere:
+\[
+  \SLERP(q_0,\,q_1,\,t)
+  = \frac{\sin\bigl((1-t)\,\Omega\bigr)}{\sin\Omega}\,q_0
+    + \frac{\sin(t\,\Omega)}{\sin\Omega}\,q_1,
+  \qquad
+  \Omega = \arccos(q_0 \cdot q_1)
+\]
+ensuring constant angular velocity.
+
+When $t_{\text{rem}} \le 0$ (the common case): the reference \emph{snaps} to
+the target and the reference velocity is set to zero.
+
+% --------------------------------------------------------------------------
+\subsection{Velocity Mode --- Lie-Group Integration}
+\label{sec:vel_interp}
+
+In velocity mode, the target provides a twist $\bm{\xi}_d$ in the TCP frame.
+The reference pose is integrated on $\SE(3)$:
+
+\begin{keqbox}[Body-Frame Velocity Integration]
+\begin{equation}
+  T_{\text{ref}}(k\!+\!1)
+  = T_{\text{ref}}(k) \cdot \Exp(\bm{\xi}_d\,\Delta t)
+  \label{eq:vel_integ}
+\end{equation}
+\end{keqbox}
+
+where $\Delta t = 1/f_c$.
+
+\begin{reasonbox}[Why right-multiply?]
+The twist $\bm{\xi}_d$ is in the TCP (body) frame, so we right-multiply.
+This means ``move forward along my current heading'' regardless of the global
+orientation --- exactly the right semantics for teleop or tool-frame velocity
+commands.
+\end{reasonbox}
+
+After integration, the pose is clamped to Cartesian limits (\S\ref{sec:clamping}).
+
+For joint velocity mode:
+\[
+  q_{\text{ref}}(k\!+\!1) = q_{\text{ref}}(k) + \dot{q}_d\,\Delta t
+\]
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Cartesian and Joint Limit Clamping}
+\label{sec:clamping}
+
+% --------------------------------------------------------------------------
+\subsection{Translation Clamping}
+
+Position targets are clamped element-wise to a bounding box:
+\[
+  p_i = \clamp(p_i,\; p_{\min,i},\; p_{\max,i}),
+  \qquad i \in \{x,\,y,\,z\}
+\]
+
+% --------------------------------------------------------------------------
+\subsection{Rotation Clamping via Quaternion Log-Map}
+\label{sec:rot_clamp}
+
+Rotation limits are expressed in the tangent space relative to a reference
+quaternion $q_{\text{ref}}$:
+
+\begin{enumerate}[nosep]
+  \item Relative quaternion:
+    $q_{\text{rel}} = q_{\text{target}} \cdot q_{\text{ref}}^{-1}$
+  \item Log-map:
+    $\bm{\phi} = \Log(q_{\text{rel}}) \in \R^3$
+  \item Clamp:
+    $\phi_i = \clamp(\phi_i,\;\phi_{\min,i},\;\phi_{\max,i})$
+  \item Reconstruct:
+    $q_{\text{clamped}} = \Exp(\bm{\phi}_{\text{clamped}}) \cdot q_{\text{ref}}$
+\end{enumerate}
+
+\begin{reasonbox}[Why log-map instead of Euler angles?]
+The log-map provides a singularity-free, minimal parameterisation of the
+relative rotation.  Euler angles suffer from gimbal lock and ambiguous
+representations near $\pm 90^\circ$ pitch.
+\end{reasonbox}
+
+% --------------------------------------------------------------------------
+\subsection{Velocity Scaling}
+
+Velocity targets are \emph{scaled} (not clamped) to preserve direction:
+\[
+  \dot{p}_{\text{scaled}} = s\,\dot{p},
+  \qquad
+  s = \min_i\!\left(\frac{v_{\max,i}}{|\dot{p}_i|}\right) \le 1
+\]
+
+A single scaling factor across all translational axes preserves direction.
+For rotational velocity:
+\[
+  \|\bm{\omega}\| > \omega_{\max}
+  \;\;\Longrightarrow\;\;
+  \bm{\omega}_{\text{scaled}} = \omega_{\max} \cdot \frac{\bm{\omega}}{\|\bm{\omega}\|}
+\]
+
+% --------------------------------------------------------------------------
+\subsection{Bisquare Soft-Margin Deceleration}
+\label{sec:bisquare}
+
+When a soft margin $m > 0$ is configured, velocity is smoothly scaled to zero
+as position approaches a limit.  The normalised penetration is:
+\[
+  d = \clamp\!\left(\frac{\text{distance from margin boundary}}{m},\;0,\;1\right)
+\]
+
+The scale factor uses the \textbf{bisquare} (biweight) kernel:
+
+\begin{keqbox}[Bisquare Deceleration]
+\begin{equation}
+  s(d) = (1 - d^2)^2
+  \label{eq:bisquare}
+\end{equation}
+\end{keqbox}
+
+Properties:
+\begin{itemize}[nosep]
+  \item $s(0) = 1$: full speed at the margin boundary
+  \item $s(1) = 0$: zero speed at the hard limit
+  \item $s'(0) = 0$, $s'(1) = 0$: smooth onset/offset --- no velocity discontinuities
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[scale=3.5, >=Stealth, font=\small]
+  \draw[->] (-0.05,0) -- (1.15,0) node[right]{$d$};
+  \draw[->] (0,-0.05) -- (0,1.15) node[above]{$s(d)$};
+  \draw[domain=0:1, samples=100, thick, blue!70!black]
+    plot (\x, {(1-\x*\x)*(1-\x*\x)});
+  \foreach \x/\lab in {0/0, 0.5/0.5, 1/1}{
+    \draw (\x,0.02) -- (\x,-0.02) node[below]{\lab};
+  }
+  \foreach \y/\lab in {0.5/0.5, 1/1}{
+    \draw (0.02,\y) -- (-0.02,\y) node[left]{\lab};
+  }
+  \node[blue!70!black, above right] at (0.35, 0.6) {$(1-d^2)^2$};
+\end{tikzpicture}
+\end{center}
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Impedance Parameter Smoothing}
+\label{sec:smoothing}
+
+% --------------------------------------------------------------------------
+\subsection{Exponential Smoothing of Stiffness and Damping}
+
+Stiffness and damping are not applied instantaneously.  An exponential moving
+average smooths transitions:
+
+\begin{keqbox}[Exponential Smoothing]
+\begin{equation}
+  S_{n+1} = (1 - c)\,S_n + c\,S_{\text{target}}
+  \label{eq:ema}
+\end{equation}
+\end{keqbox}
+
+where $c \in [0,1]$ is the smoothing constant (separate values for stiffness
+and damping).
+
+\begin{reasonbox}
+Instantaneous stiffness changes produce torque discontinuities that can excite
+structural resonances or jerk the arm.  Smoothing acts as a first-order
+low-pass filter with effective time constant $\tau \approx \Delta t / c$.
+\end{reasonbox}
+
+\begin{examplebox}
+With $c = 0.05$ at 1\,kHz, the time constant is
+$\tau = 1\,\text{ms}/0.05 = 20$\,ms.  A step in stiffness from 100 to
+500\,N/m reaches 95\% in $\approx 60$\,ms ($\approx 3\tau$).
+\end{examplebox}
+
+% --------------------------------------------------------------------------
+\subsection{Feedforward Wrench Interpolation (Rate-Limited)}
+
+The feedforward wrench is ramped toward its target using a rate limiter:
+\begin{equation}
+  F_{\text{ff},i}(k\!+\!1)
+  = F_{\text{ff},i}(k)
+    + \clamp\!\bigl(
+        F_{\text{target},i} - F_{\text{ff},i}(k),\;
+        -\dot{F}_{\max,i}\,\Delta t,\;
+         \dot{F}_{\max,i}\,\Delta t
+      \bigr)
+  \label{eq:rate_limit}
+\end{equation}
+
+The target wrench is also clamped to configurable min/max bounds before ramping.
+
+% --------------------------------------------------------------------------
+\subsection{Force Feedback with Tare Offset}
+\label{sec:force_fb}
+
+A feedback loop mixes the feedforward wrench with the sensed wrench:
+\begin{equation}
+  F_{\text{total}}
+  = F_{\text{ff}}
+    + G_{\text{fb}} \odot \bigl(F_{\text{ff}} - F_{\text{sensed}}^{\text{tared}}\bigr)
+  \label{eq:force_fb}
+\end{equation}
+
+where $G_{\text{fb}} \in \R^6$ are per-axis feedback gains and
+$F_{\text{sensed}}^{\text{tared}} = F_{\text{sensed}} - F_{\text{tare}}$.
+
+The tare offset is captured by a service call and stored in the base frame.
+Each cycle it is transformed to the TCP frame:
+\[
+  F_{\text{tare}}^{\text{tip}} = R_{\text{tcp}}^{-1}\,F_{\text{tare}}^{\text{base}}
+\]
+
+The total wrench (TCP frame) is then transformed to base frame for the
+impedance law:
+\[
+  F_{\text{ff}}^{\text{base}} = R_{\text{tcp}}\,F_{\text{total}}^{\text{tcp}}
+\]
+(Applied separately to force and torque 3-vectors.)
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Tracking Error Watchdog}
+\label{sec:watchdog}
+
+A safety mechanism detects when the controller cannot make progress:
+
+\begin{enumerate}[nosep]
+  \item Each cycle, compute
+    $\Delta e = |e_x(k) - e_x(k\!-\!1)|$.
+  \item If $\|e_x\|_\infty >$ minimum error threshold \textbf{and}
+    $\Delta e$ is below minimum change threshold for longer than a configurable
+    timeout $\Longrightarrow$ reset target to current pose.
+\end{enumerate}
+
+This prevents indefinite build-up of integral error or feedforward wrench when
+blocked by obstacles, joint limits, or singularities.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Complete Algorithm Flow}
+\label{sec:flow}
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=8mm and 5mm,
+  block/.style={draw, rounded corners=3pt, fill=boxblue,
+                minimum width=5.8cm, minimum height=8mm,
+                font=\small\sffamily, align=center},
+  arrow/.style={->, thick, >=Stealth},
+  font=\small\sffamily
+]
+
+\node[block] (read) {1. Read Hardware\\
+  {\scriptsize $q,\,\dot{q}$ from joints;\; FK $\to$ $T,\,\xi$;\; FT sensor}};
+
+\node[block, below=of read] (ingest) {2. Ingest Commands\\
+  {\scriptsize MotionUpdate / JointMotionUpdate}};
+
+\node[block, below=of ingest] (ref) {3. Generate Reference\\
+  {\scriptsize Clamp to limits;\; SLERP / linear interp / velocity integration}};
+
+\node[block, below=of ref] (smooth) {4. Smooth Impedance Parameters\\
+  {\scriptsize EMA on $K,D$;\; rate-limit $F_{\text{ff}}$;\; force feedback + tare}};
+
+\node[block, below=of smooth] (compute) {5. Compute Control Torques\\
+  {\scriptsize Cartesian: $\tau\!=\!J^\tr F + \tau_{\text{ns}} + \tau_{\text{avoid}}$
+  \;\;or\;\; Joint: $\tau\!=\!K \odot e_q + D \odot e_{\dot{q}} + \tau_{\text{ff}}$
+  \;\;$+\;\tau_g$}};
+
+\node[block, below=of compute] (write) {6. Write Hardware\\
+  {\scriptsize Set effort command interfaces}};
+
+\node[block, below=of write] (pub) {7. Publish State\\
+  {\scriptsize TCP pose/vel, error, joint ref, tare offset}};
+
+\draw[arrow] (read) -- (ingest);
+\draw[arrow] (ingest) -- (ref);
+\draw[arrow] (ref) -- (smooth);
+\draw[arrow] (smooth) -- (compute);
+\draw[arrow] (compute) -- (write);
+\draw[arrow] (write) -- (pub);
+
+\end{tikzpicture}
+\end{center}
+
+\subsection{Final Torque Equations}
+
+\paragraph{Cartesian impedance mode:}
+
+\begin{keqbox}[Complete Cartesian Impedance Torque]
+\begin{equation}
+\begin{aligned}
+  \tau \;=\;&
+    \underbrace{
+      J^\tr\!\bigl(
+        K\,e_x + D\,e_v + F_{\text{ff}}
+        + K_I \odot e_I + F_{\text{offset}}
+      \bigr)
+    }_{\mathclap{\text{Cartesian impedance}}}
+  \\\[6pt]
+  &+\; \underbrace{
+    (I - JJ^\dagger)\,
+    \bigl(K_{\text{ns}} \odot (q^*_{\text{ns}} \!-\! q)
+          - D_{\text{ns}} \odot \dot{q}\bigr)
+  }_{\mathclap{\text{Nullspace}}}
+  \\\[6pt]
+  &+\; \underbrace{\tau_{\text{avoid}}}_{\mathclap{\text{Joint limit}}}
+  \;+\; \underbrace{\tau_g(q)}_{\mathclap{\text{Gravity}}}
+\end{aligned}
+\label{eq:final_cart}
+\end{equation}
+\end{keqbox}
+
+\paragraph{Joint impedance mode:}
+
+\begin{keqbox}[Complete Joint Impedance Torque]
+\begin{equation}
+\begin{aligned}
+  \tau \;=\;&
+    K \odot (q^* \!-\! q)
+    + D \odot (\dot{q}^* \!-\! \dot{q})
+  \\\[4pt]
+  &+\; \tau_{\text{ff}} + \tau_g(q)
+\end{aligned}
+\label{eq:final_joint}
+\end{equation}
+\end{keqbox}
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{File-to-Concept Map}
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{6.7cm}p{7.7cm}@{}}
+\toprule
+\textbf{File} & \textbf{Sections} \\
+\midrule
+\path{src/actions/cartesian_impedance_action.cpp}
+  & \S\ref{sec:cartesian_imp} (Wrench, $J^\tr$),
+    \S\ref{sec:nullspace} (Nullspace),
+    \S\ref{sec:jlimit} (Joint limits) \\[4pt]
+\path{include/.../cartesian_impedance_action.hpp}
+  & \S\ref{sec:svd} (Chiaverini pseudo-inverse docs) \\[4pt]
+\path{src/actions/joint_impedance_action.cpp}
+  & \S\ref{sec:joint_imp} (Joint impedance) \\[4pt]
+\path{src/actions/gravity_compensation_action.cpp}
+  & \S\ref{sec:gravity} (KDL gravity) \\[4pt]
+\path{src/aic_controller.cpp}
+  & \S\ref{sec:refgen} (Reference gen),
+    \S\ref{sec:clamping} (Clamping),
+    \S\ref{sec:smoothing} (Smoothing),
+    \S\ref{sec:watchdog} (Watchdog),
+    \S\ref{sec:flow} (Full flow) \\[4pt]
+\path{src/utils.cpp}
+  & \S\ref{sec:explog} (Exp/Log),
+    \S\ref{sec:vel_interp} (SE3 integration) \\[4pt]
+\path{include/.../cartesian_limits.hpp}
+  & \S\ref{sec:rot_clamp} (Rotation limits) \\[4pt]
+\path{include/.../cartesian_state.hpp}
+  & \S\ref{sec:SE3} (Pose representation) \\
+\bottomrule
+\end{tabular}
+\normalsize
+\end{center}
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section*{References}
+
+\begin{enumerate}[label={[\arabic*]}, nosep]
+  \item Chiaverini, S. (1997).
+    \emph{Singularity-robust task-priority redundancy resolution for real-time
+    kinematic control of robot manipulators.}
+    IEEE Transactions on Robotics and Automation, 13(3), 398--410.
+
+  \item Siciliano, B., Sciavicco, L., Villani, L., \& Oriolo, G. (2009).
+    \emph{Robotics: Modelling, Planning and Control.}
+    Springer.
+
+  \item Lynch, K.\,M. \& Park, F.\,C. (2017).
+    \emph{Modern Robotics: Mechanics, Planning, and Control.}
+    Cambridge University Press.
+\end{enumerate}
+
+\end{document}

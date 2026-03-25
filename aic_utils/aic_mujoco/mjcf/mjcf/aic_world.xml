@@ -37,13 +37,13 @@
     <material name="material_6134dea747d444d9fb5f9afccdccd179a5c3afbe209ed6fdaedcbd8639717e9a_walls_visual_merged_1" class="world_default" shininess="30" rgba="0.262745 0.262745 0.262745 1"/>
     <material name="material_6134dea747d444d9fb5f9afccdccd179a5c3afbe209ed6fdaedcbd8639717e9a_walls_visual_Plane.003_1" class="world_default" shininess="30" rgba="0.8 0.8 0.8 1"/>
     <material name="material_6134dea747d444d9fb5f9afccdccd179a5c3afbe209ed6fdaedcbd8639717e9a_walls_visual_Plane.002" class="world_default" shininess="30" rgba="0.207843 0.207843 0.207843 1"/>
+    <material name="material_adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019" class="world_default" shininess="30" rgba="0.0352941 0.0352941 0.0313726 1"/>
+    <material name="material_adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_1" class="world_default" shininess="30" rgba="0.0313726 0.0313726 0.0313726 1"/>
+    <material name="material_adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_2" class="world_default" shininess="30" rgba="0.215686 0 0.215686 1"/>
     <material name="material_1a8d320a5d570ec6df97fbb8031a6b90f8651400f3185bf3b33f7e5cf29fb96e_sc_plug_visual_merged_0" class="world_default" texture="texture_1a8d320a5d570ec6df97fbb8031a6b90f8651400f3185bf3b33f7e5cf29fb96e_sc_plug_visual_merged_0" shininess="30" rgba="0.5 0.5 0.5 1"/>
     <material name="material_3c71e6fdde3349dbfec37505120cc036c9a09c068036dcd865c1ff3d0336a4d3_lc_plug_visual_merged_0" class="world_default" texture="texture_3c71e6fdde3349dbfec37505120cc036c9a09c068036dcd865c1ff3d0336a4d3_lc_plug_visual_merged_0" shininess="30" rgba="0.5 0.5 0.5 1"/>
     <material name="material_afe088fe8fb1373dee592578e0901b7a74fc4c287a45a74ecb852e563b4cc83e_sfp_module_visual_Body.005" class="world_default" texture="texture_afe088fe8fb1373dee592578e0901b7a74fc4c287a45a74ecb852e563b4cc83e_sfp_module_visual_Body.005" shininess="30" rgba="0.5 0.5 0.5 1"/>
     <material name="material_afe088fe8fb1373dee592578e0901b7a74fc4c287a45a74ecb852e563b4cc83e_sfp_module_visual_Body.005_1" class="world_default" texture="texture_afe088fe8fb1373dee592578e0901b7a74fc4c287a45a74ecb852e563b4cc83e_sfp_module_visual_Body.005_1" shininess="30" rgba="0.5 0.5 0.5 1"/>
-    <material name="material_adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019" class="world_default" shininess="30" rgba="0.0352941 0.0352941 0.0313726 1"/>
-    <material name="material_adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_1" class="world_default" shininess="30" rgba="0.0313726 0.0313726 0.0313726 1"/>
-    <material name="material_adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_2" class="world_default" shininess="30" rgba="0.215686 0 0.215686 1"/>
     <mesh name="f81430f844b7fdcbe82ef96ca64dddb6e07a165b85771d251fb3654027d6cc5b_enclosure_visual_V1014952.001" class="world_default" content_type="model/obj" file="f81430f844b7fdcbe82ef96ca64dddb6e07a165b85771d251fb3654027d6cc5b_enclosure_visual_V1014952.001-c990efe7b9dfe87aa065fd6eb3960ce051ae2aef.obj" inertia="shell"/>
     <mesh name="f81430f844b7fdcbe82ef96ca64dddb6e07a165b85771d251fb3654027d6cc5b_enclosure_visual_V1014952.001_1" class="world_default" content_type="model/obj" file="f81430f844b7fdcbe82ef96ca64dddb6e07a165b85771d251fb3654027d6cc5b_enclosure_visual_V1014952.001_1-807e07de06af157c84b994a232617507a7059420.obj" inertia="shell"/>
     <mesh name="f81430f844b7fdcbe82ef96ca64dddb6e07a165b85771d251fb3654027d6cc5b_light_visual_Plane.001" class="world_default" content_type="model/obj" file="f81430f844b7fdcbe82ef96ca64dddb6e07a165b85771d251fb3654027d6cc5b_light_visual_Plane.001-a8a774a80bc239d73769a498eae528b206eebcb0.obj" inertia="shell"/>
@@ -52,13 +52,13 @@
     <mesh name="6134dea747d444d9fb5f9afccdccd179a5c3afbe209ed6fdaedcbd8639717e9a_walls_visual_merged_1" class="world_default" content_type="model/obj" file="6134dea747d444d9fb5f9afccdccd179a5c3afbe209ed6fdaedcbd8639717e9a_walls_visual_merged_1-359a22140d528747936e80bedf90e1437a177a9f.obj" inertia="shell"/>
     <mesh name="6134dea747d444d9fb5f9afccdccd179a5c3afbe209ed6fdaedcbd8639717e9a_walls_visual_Plane.003_1" class="world_default" content_type="model/obj" file="6134dea747d444d9fb5f9afccdccd179a5c3afbe209ed6fdaedcbd8639717e9a_walls_visual_Plane.003_1-cd05ed21fa19a2784fb772d7519abf7c31c8b85f.obj" inertia="shell"/>
     <mesh name="6134dea747d444d9fb5f9afccdccd179a5c3afbe209ed6fdaedcbd8639717e9a_walls_visual_Plane.002" class="world_default" content_type="model/obj" file="6134dea747d444d9fb5f9afccdccd179a5c3afbe209ed6fdaedcbd8639717e9a_walls_visual_Plane.002-ee4f781765eec46c2256d941981732d4b1857f24.obj" inertia="shell"/>
+    <mesh name="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019" class="world_default" content_type="model/obj" file="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019-f814bb518c42769543ab6246809f3fe4af5c2b64.obj" inertia="shell"/>
+    <mesh name="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_1" class="world_default" content_type="model/obj" file="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_1-0b276ba9910a7642121235b62d2afc47c3995782.obj" inertia="shell"/>
+    <mesh name="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_2" class="world_default" content_type="model/obj" file="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_2-7b96569be9572803417c5650ee83c9c883b44191.obj" inertia="shell"/>
     <mesh name="1a8d320a5d570ec6df97fbb8031a6b90f8651400f3185bf3b33f7e5cf29fb96e_sc_plug_visual_merged_0" class="world_default" content_type="model/obj" file="1a8d320a5d570ec6df97fbb8031a6b90f8651400f3185bf3b33f7e5cf29fb96e_sc_plug_visual_merged_0-67f94accf247f722dd4954d7448d7956402901f2.obj" inertia="shell"/>
     <mesh name="3c71e6fdde3349dbfec37505120cc036c9a09c068036dcd865c1ff3d0336a4d3_lc_plug_visual_merged_0" class="world_default" content_type="model/obj" file="3c71e6fdde3349dbfec37505120cc036c9a09c068036dcd865c1ff3d0336a4d3_lc_plug_visual_merged_0-fdaf59710fc3cc118a7df05add4ff4205edda4ef.obj" inertia="shell"/>
     <mesh name="afe088fe8fb1373dee592578e0901b7a74fc4c287a45a74ecb852e563b4cc83e_sfp_module_visual_Body.005" class="world_default" content_type="model/obj" file="afe088fe8fb1373dee592578e0901b7a74fc4c287a45a74ecb852e563b4cc83e_sfp_module_visual_Body.005-f93147e1e403de321fb70c06a4b1e00f20feb9fd.obj" inertia="shell"/>
     <mesh name="afe088fe8fb1373dee592578e0901b7a74fc4c287a45a74ecb852e563b4cc83e_sfp_module_visual_Body.005_1" class="world_default" content_type="model/obj" file="afe088fe8fb1373dee592578e0901b7a74fc4c287a45a74ecb852e563b4cc83e_sfp_module_visual_Body.005_1-4af964a95522e2593eb6381eca4f09ef239782c7.obj" inertia="shell"/>
-    <mesh name="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019" class="world_default" content_type="model/obj" file="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019-f814bb518c42769543ab6246809f3fe4af5c2b64.obj" inertia="shell"/>
-    <mesh name="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_1" class="world_default" content_type="model/obj" file="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_1-0b276ba9910a7642121235b62d2afc47c3995782.obj" inertia="shell"/>
-    <mesh name="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_2" class="world_default" content_type="model/obj" file="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_2-7b96569be9572803417c5650ee83c9c883b44191.obj" inertia="shell"/>
   </asset>
 
   <worldbody>
@@ -92,6 +92,17 @@
       <geom name="walls_visual_0" class="world_default" type="mesh" contype="0" conaffinity="0" material="material_6134dea747d444d9fb5f9afccdccd179a5c3afbe209ed6fdaedcbd8639717e9a_walls_visual_merged_1" mesh="6134dea747d444d9fb5f9afccdccd179a5c3afbe209ed6fdaedcbd8639717e9a_walls_visual_merged_1"/>
       <geom name="walls_visual_1" class="world_default" type="mesh" contype="0" conaffinity="0" material="material_6134dea747d444d9fb5f9afccdccd179a5c3afbe209ed6fdaedcbd8639717e9a_walls_visual_Plane.003_1" mesh="6134dea747d444d9fb5f9afccdccd179a5c3afbe209ed6fdaedcbd8639717e9a_walls_visual_Plane.003_1"/>
       <geom name="walls_visual_2" class="world_default" type="mesh" contype="0" conaffinity="0" material="material_6134dea747d444d9fb5f9afccdccd179a5c3afbe209ed6fdaedcbd8639717e9a_walls_visual_Plane.002" mesh="6134dea747d444d9fb5f9afccdccd179a5c3afbe209ed6fdaedcbd8639717e9a_walls_visual_Plane.002"/>
+    </body>
+    <body name="task_board_base_link" pos="0.15 -0.2 1.14" quat="4.63268e-05 0 0 1">
+      <inertial pos="0 0 0" mass="5" diaginertia="0.1 0.1 0.1"/>
+      <geom name="task_board_base_link_fixed_joint_lump__v1015083001_collider_box_left_collision" class="world_default" size="0.15 0.114 0.0045" pos="0 -0.1 0.0075" type="box" group="3"/>
+      <geom name="task_board_base_link_fixed_joint_lump__v1015083001_collider_right_collision_1" class="world_default" size="0.15 0.0635 0.0045" pos="0 0.149 0.0075" type="box" group="3"/>
+      <geom name="task_board_base_link_fixed_joint_lump__v1015083001_collider_mid_collision_2" class="world_default" size="0.07 0.006 0.0045" pos="-0.075 0.05 0.0075" type="box" group="3"/>
+      <geom name="task_board_base_link_fixed_joint_lump__v1015083001_collider_bottom_collision_3" class="world_default" size="0.0825 0.2125 0.0045" pos="0.068 0 0.0075" type="box" group="3"/>
+      <geom name="task_board_base_link_fixed_joint_lump__v1015083001_collider_top_collision_4" class="world_default" size="0.0075 0.2125 0.0045" pos="-0.143 0 0.0075" type="box" group="3"/>
+      <geom name="task_board_base_link_fixed_joint_lump__base_visual_visual" class="world_default" type="mesh" contype="0" conaffinity="0" material="material_adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019" mesh="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019"/>
+      <geom name="task_board_base_link_fixed_joint_lump__base_visual_visual_0" class="world_default" type="mesh" contype="0" conaffinity="0" material="material_adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_1" mesh="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_1"/>
+      <geom name="task_board_base_link_fixed_joint_lump__base_visual_visual_1" class="world_default" type="mesh" contype="0" conaffinity="0" material="material_adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_2" mesh="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_2"/>
     </body>
     <body name="cable_end_0" childclass="cable_default" pos="0.171400 0.020606 1.511889" quat="0.712741 0.312130 -0.052173 0.625982">
       <freejoint name="cable_end_0_free"/>
@@ -343,17 +354,6 @@
         </body>
       </body>
     </body>
-    <body name="task_board_base_link" pos="0.15 -0.2 1.14" quat="4.63268e-05 0 0 1">
-      <inertial pos="0 0 0" mass="5" diaginertia="0.1 0.1 0.1"/>
-      <geom name="task_board_base_link_fixed_joint_lump__v1015083001_collider_box_left_collision" class="world_default" size="0.15 0.114 0.0045" pos="0 -0.1 0.0075" type="box" group="3"/>
-      <geom name="task_board_base_link_fixed_joint_lump__v1015083001_collider_right_collision_1" class="world_default" size="0.15 0.0635 0.0045" pos="0 0.149 0.0075" type="box" group="3"/>
-      <geom name="task_board_base_link_fixed_joint_lump__v1015083001_collider_mid_collision_2" class="world_default" size="0.07 0.006 0.0045" pos="-0.075 0.05 0.0075" type="box" group="3"/>
-      <geom name="task_board_base_link_fixed_joint_lump__v1015083001_collider_bottom_collision_3" class="world_default" size="0.0825 0.2125 0.0045" pos="0.068 0 0.0075" type="box" group="3"/>
-      <geom name="task_board_base_link_fixed_joint_lump__v1015083001_collider_top_collision_4" class="world_default" size="0.0075 0.2125 0.0045" pos="-0.143 0 0.0075" type="box" group="3"/>
-      <geom name="task_board_base_link_fixed_joint_lump__base_visual_visual" class="world_default" type="mesh" contype="0" conaffinity="0" material="material_adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019" mesh="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019"/>
-      <geom name="task_board_base_link_fixed_joint_lump__base_visual_visual_0" class="world_default" type="mesh" contype="0" conaffinity="0" material="material_adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_1" mesh="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_1"/>
-      <geom name="task_board_base_link_fixed_joint_lump__base_visual_visual_1" class="world_default" type="mesh" contype="0" conaffinity="0" material="material_adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_2" mesh="adc5cf37bbd3c376b4a080ef391065cbfbfa5092e17bbd6a523fbf7f969d9ef2_base_visual_ISO_4762_-_M3_x_8.019_2"/>
-    </body>
     <body name="static_link">
       <inertial pos="0 0 0" mass="1" diaginertia="1 1 1"/>
     </body>
@@ -366,7 +366,7 @@
     <exclude body1="cable_end_0" body2="link_1"/>
   </contact>
 
-  <!-- <equality>
+  <equality>
     <weld body1="ati/tool_link" body2="lc_plug_link" relpose="-0.000711 0.001759 0.168213 0.577301 0.816105 -0.021418 -0.015395" solref="0.002 1" solimp="0.99 0.999 0.001"/>
-  </equality> -->
+  </equality>
 </mujoco>

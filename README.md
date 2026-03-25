@@ -1,4 +1,10 @@
 # AI for Industry Challenge Toolkit
+conda activate aic
+conda install python pip
+hash -r
+which python
+which pip
+python -m pip install pynput
 
 [![build](https://github.com/intrinsic-dev/aic/actions/workflows/build.yml/badge.svg)](https://github.com/intrinsic-dev/aic/actions/workflows/build.yml)
 [![style](https://github.com/intrinsic-dev/aic/actions/workflows/style.yml/badge.svg)](https://github.com/intrinsic-dev/aic/actions/workflows/style.yml)
